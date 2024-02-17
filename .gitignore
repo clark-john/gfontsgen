@@ -1,0 +1,5 @@
+fonts
+.env
+*.json
+*.txt
+*.exe
