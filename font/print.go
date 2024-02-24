@@ -7,7 +7,7 @@ import (
 )
 
 func PrintVariantsErrAndExit(variants []string, indices []int) {
-	fmt.Println("Following variants are invalid: ")
+	fmt.Print("Following variants are invalid: ")
 
 	fmt.Print("[")
 
@@ -24,7 +24,7 @@ func PrintVariantsErrAndExit(variants []string, indices []int) {
 
 	fmt.Print(str.String())
 
-	fmt.Print("]")
+	fmt.Println("]")
 
 	os.Exit(1)
 }

@@ -137,11 +137,17 @@ func ListCommand() *cobra.Command {
 }
 
 func ValidateClassification(cl string) bool {
-	validValues := []string{"display", "handwriting", "mono", "monospace"}
-	return utils.IsIn(validValues, strings.ToLower(cl))
+	return lo.Contains([]string{
+		"display", 
+		"handwriting", 
+		"mono", 
+		"monospace",
+	}, strings.ToLower(cl))
 }
 
 func ValidateDecorativeStroke(stroke string) bool {
-	validValues := []string{"serif", "sans-serif"}
-	return utils.IsIn(validValues, strings.ToLower(stroke))
+	return lo.Contains([]string{
+		"serif", 
+		"sans-serif",
+	}, strings.ToLower(stroke))
 }

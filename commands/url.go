@@ -32,8 +32,10 @@ func SendAndEncode(h *http.HttpClient) (*json.FullResponse, bool) {
 */
 func UrlCommand() *cobra.Command {
   var variants string
+  // var config string
   var copyToClipboard bool
   var cssImport bool
+
   client := http.NewHttpClientWithKey(key.GetApiKey())
 
   com := &cobra.Command{
@@ -46,14 +48,22 @@ func UrlCommand() *cobra.Command {
   fl.StringVarP(&variants, "variants", "v", "", "Generate with specific variants (e.g. 400, 600, 200i, etc)")
   fl.BoolVar(&copyToClipboard, "copy", false, "Copy URL to clipboard")
   fl.BoolVarP(&cssImport, "css-import", "i", false, "Display as CSS import rule")
+  // ConfigFlag(fl, &config)
 
-  com.Run = func(cmd *cobra.Command, args []string) {
-    if len(args) < 1 {
+  com.Run = func(cmd *cobra.Command, args []string) { 
+    var family string
+
+    if /*!cmd.Flag("config").Changed && */len(args) < 1 {
       color.HiYellow("Provide a font family name")
       utils.Exit(1)
     }
 
-    client.SetQuery("family", utils.ToTitleCase(args[0]))
+    family = args[0]
+
+    /*IsOnlyConfigFlagOrExit(fl, []string{"css-import", "copy"})
+    LookupConfigFile(config)*/
+
+    client.SetQuery("family", utils.ToTitleCase(family))
 
     options := DefaultGenUrlOptions()
 
@@ -95,10 +105,10 @@ func UrlCommand() *cobra.Command {
         }
       }
 
-
     } else {
       fmt.Println(color.HiRedString("Font family not found"))
     }
+  
   }
 
   return com

@@ -3,3 +3,5 @@ fonts
 *.json
 *.txt
 *.exe
+!schema/config.json
+config.go

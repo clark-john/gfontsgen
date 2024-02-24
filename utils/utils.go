@@ -28,17 +28,6 @@ func ToTitleCase(str string) string {
 	return strings.Join(words, " ")
 }
 
-func IsInEnviron(keyname string) bool {
-	var keypair []string
-	for _, k := range os.Environ() {
-		keypair = strings.Split(k, "=")
-		if strings.EqualFold(keypair[0], keyname) {
-			return true
-		}
-	}
-	return false
-}
-
 func Exit(code int){
 	os.Exit(code)
 }

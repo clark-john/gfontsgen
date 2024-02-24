@@ -1,16 +1,13 @@
 package key
 
-import (
-	"os"
-	"github.com/clark-john/gfontsgen/utils"
-)
+import "os"
 
 const KEY_NAME string = "GFONTSGEN_API_KEY"
 
 /**
- *  only used if GFONTSGEN_API_KEY is actually set 
+ *  get currently set api key 
 */
 func GetApiKey() string {
-	m := utils.ToMap(os.Environ())
-	return m[KEY_NAME]
+	apiKey, _ := os.LookupEnv(KEY_NAME)
+	return apiKey
 }
