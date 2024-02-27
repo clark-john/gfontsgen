@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
-	"github.com/clark-john/gfontsgen/font"
 	"github.com/clark-john/gfontsgen/http"
 	"github.com/clark-john/gfontsgen/json"
 	"github.com/clark-john/gfontsgen/key"
@@ -67,21 +66,7 @@ func UrlCommand() *cobra.Command {
 
     options := DefaultGenUrlOptions()
 
-    if cmd.Flag("variants").Changed {
-      if !font.ValidateVariantsArg(variants) {
-        color.HiRed(`Invalid variants argument it must be in this format: "400,500,600"`)
-        utils.Exit(1)
-      }
-      v := strings.Split(variants, ",")
-      
-      indices := font.ValidateVariants(v)
-
-      if indices != nil {
-        font.PrintVariantsErrAndExit(v, indices)
-      }
-
-      options.Variants = v
-    }
+    CheckVariants(cmd.Flag("variants").Changed, variants, &options.Variants)
 
     resp, isFound := SendAndEncode(client)
 

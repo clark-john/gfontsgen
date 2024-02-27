@@ -9,7 +9,7 @@ import (
 )
 
 const KEY_NAME string = key.KEY_NAME
-const Version string = "1.0.0"
+const Version string = "1.0.1"
 
 func main() {
 	_, isFound := os.LookupEnv(KEY_NAME)
@@ -34,6 +34,7 @@ func main() {
 	com.AddCommand(
 		commands.ListCommand(),
 		commands.GenCommand(),
+		commands.GfontswebCommand(),
 	)
 
 	err := com.Execute()

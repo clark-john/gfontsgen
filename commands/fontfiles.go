@@ -53,25 +53,15 @@ func FontFilesCommand() *cobra.Command {
 
     options := DefaultGenFfOptions()
 
-    /* reused from url.go */
-    if cmd.Flag("variants").Changed {
-      if !font.ValidateVariantsArg(variants) {
-        color.HiRed(`Invalid variants argument it must be in this format: "400,500,600"`)
-        utils.Exit(1)
-      }
-      v := strings.Split(variants, ",")
-      
-      indices := font.ValidateVariants(v)
-
-      if indices != nil {
-        font.PrintVariantsErrAndExit(v, indices)
-      }
-
-      options.Variants = v
-    }
-    /* end fo reused block */
+    CheckVariants(
+    	cmd.Flag("variants").Changed, variants, &options.Variants,
+    )
 
     resp, isFound := SendAndEncode(client)
+
+    if cmd.Flag("path").Changed {
+    	options.Path = outputPath
+    }
 
     if isFound {
 	    GenerateFontFiles(resp.Items[0], options)

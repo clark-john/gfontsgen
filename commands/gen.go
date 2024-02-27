@@ -1,6 +1,11 @@
 package commands
 
 import (
+	"os"
+	"strings"
+
+	"github.com/clark-john/gfontsgen/font"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -45,4 +50,22 @@ func GenCommand() *cobra.Command {
 	)
 
 	return com
+}
+
+func CheckVariants(isVariantsFlagPresent bool, varnts string, variants *[]string){
+	if isVariantsFlagPresent {
+		if !font.ValidateVariantsArg(varnts) {
+		  color.HiRed(`Invalid variants argument it must be in this format: "400,500,600"`)
+		  os.Exit(1)
+		}
+		v := strings.Split(varnts, ",")
+
+		indices := font.ValidateVariants(v)
+
+		if indices != nil {
+		  font.PrintVariantsErrAndExit(v, indices)
+		}
+
+		*variants = v		
+	}
 }
