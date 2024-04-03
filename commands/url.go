@@ -2,23 +2,42 @@ package commands
 
 import (
 	"fmt"
-	"net/url"
+	"os"
 	"strings"
 
 	"github.com/atotto/clipboard"
+	conf "github.com/clark-john/gfontsgen/config"
+	"github.com/clark-john/gfontsgen/gen"
 	"github.com/clark-john/gfontsgen/http"
 	"github.com/clark-john/gfontsgen/json"
 	"github.com/clark-john/gfontsgen/key"
 	"github.com/clark-john/gfontsgen/utils"
 	"github.com/fatih/color"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
+
+type GenerateSingleArgs struct {
+  Family string
+  Client *http.HttpClient
+  Cmd *cobra.Command
+  Variants string
+  CssImport bool
+  CopyToClipboard bool
+}
+
+type GenerateMultipleArgs struct {
+  Config string
+  Client *http.HttpClient
+}
 
 const FONT_URL = "https://fonts.googleapis.com/css"
 
 func SendAndEncode(h *http.HttpClient) (*json.FullResponse, bool) {
   str := h.Send()
+  if strings.Contains(str, "no such host") {
+    fmt.Println("Cannot fetch. Check your internet connection.")
+    os.Exit(1)
+  }  
   if strings.Contains(str, "404") {
     return nil, false
   }
@@ -31,7 +50,7 @@ func SendAndEncode(h *http.HttpClient) (*json.FullResponse, bool) {
 */
 func UrlCommand() *cobra.Command {
   var variants string
-  // var config string
+  var config string
   var copyToClipboard bool
   var cssImport bool
 
@@ -47,114 +66,117 @@ func UrlCommand() *cobra.Command {
   fl.StringVarP(&variants, "variants", "v", "", "Generate with specific variants (e.g. 400, 600, 200i, etc)")
   fl.BoolVar(&copyToClipboard, "copy", false, "Copy URL to clipboard")
   fl.BoolVarP(&cssImport, "css-import", "i", false, "Display as CSS import rule")
-  // ConfigFlag(fl, &config)
+  ConfigFlag(fl, &config)
 
   com.Run = func(cmd *cobra.Command, args []string) { 
-    var family string
+    isConfigFlag := conf.IsPresent(cmd)
 
-    if /*!cmd.Flag("config").Changed && */len(args) < 1 {
-      color.HiYellow("Provide a font family name")
-      utils.Exit(1)
-    }
+    IsOnlyConfigFlagOrExit(fl)
 
-    family = args[0]
-
-    /*IsOnlyConfigFlagOrExit(fl, []string{"css-import", "copy"})
-    LookupConfigFile(config)*/
-
-    client.SetQuery("family", utils.ToTitleCase(family))
-
-    options := DefaultGenUrlOptions()
-
-    CheckVariants(cmd.Flag("variants").Changed, variants, &options.Variants)
-
-    resp, isFound := SendAndEncode(client)
-
-    if isFound {
-      generated, hasWarnings := GenerateUrl(resp.Items[0], options)
-
-      if cssImport {
-        generated = `@import url("` + generated + `");`
+    if !isConfigFlag {
+      if len(args) < 1 {
+        color.HiYellow("Provide a font family name")
+        utils.Exit(1)
       }
-
-      if !hasWarnings {
-        fmt.Println(generated)
-  
-        if copyToClipboard {
-          err := clipboard.WriteAll(generated)
-          if err == nil {
-            color.HiGreen("Successfully copied!")
-          } else {
-            color.HiRed("Failed to copy")
-          }
-        }
-      }
-
+      UrlGenerateSingle(GenerateSingleArgs{
+        Cmd: cmd,
+        Client: client,
+        Family: args[0],
+        Variants: variants,
+        CssImport: cssImport,
+        CopyToClipboard: copyToClipboard,
+      })
     } else {
-      fmt.Println(color.HiRedString("Font family not found"))
+      UrlGenerateMultiple(GenerateMultipleArgs{
+        Config: config,
+        Client: client,
+      })
     }
-  
   }
 
   return com
 }
 
-func GenerateUrl(font json.FontItem, options *GenerateUrlOptions) (string, bool) {
-  u, _ := url.Parse(FONT_URL)
-  var hasWarnings []int
+func UrlGenerateSingle(args GenerateSingleArgs){
+  options := gen.DefaultGenUrlOptions()
 
-  var family strings.Builder
+  family := args.Family
+  client := args.Client
+  cmd := args.Cmd
+  variants := args.Variants
+  cssImport := args.CssImport
+  copyToClipboard := args.CopyToClipboard
 
-  family.WriteString(font.Family)  
-  family.WriteString(":")
+  /* setting the family query to filter it to single font family */
+  client.SetQuery("family", utils.ToTitleCase(family))
+ 
+  CheckVariants(cmd.Flag("variants").Changed, variants, &options.Variants)
 
-  if !IsAll(options.Variants) {
-    for i, variant := range options.Variants {
-      family.WriteString(variant)
+  resp, isFound := SendAndEncode(client)
 
-      /* error */
-      v := ReplaceIWithItalic(variant)
+  if isFound {
+    generated, hasWarnings := gen.GenerateUrl(resp.Items[0], options)
 
-      if !HasKey(font.Files, v) {
-        color.HiYellow(
-          "Warning: variant %s doesn't exist on font %s.", 
-          v, font.Family,
-        )
-        hasWarnings = append(hasWarnings, 1)
-      }
+    if cssImport {
+      CssImportSurround(&generated)
+    }
 
-      if i < len(options.Variants) - 1 {
-        family.WriteString(",")
+    if !hasWarnings {
+      fmt.Println(generated)
+
+      if copyToClipboard {
+        CopyText(generated)
       }
     }
+
   } else {
-    family.WriteString(strings.Join(lo.Map(font.Variants, func(item string, i int) string {
-      if item != "italic" {
-        return strings.ReplaceAll(item, "italic", "i")
-      } else {
-        return "italic"
-      }
-    }),","))
+    /* this condition is only applied to single family (without config) */
+    fmt.Println(color.HiRedString("Font family not found"))
+  }
+}
+
+func UrlGenerateMultiple(args GenerateMultipleArgs){
+  config := args.Config
+  client := args.Client
+
+  cfg := conf.ParseAndValidateConfig(config)
+  ops := cfg.Options
+  
+  /* check variants of every option item */
+  for index, op := range ops {
+    if index == len(ops) - 1 {
+      CheckVariantsP(op.Variants, true, op.FontFamily)
+    } else {
+      CheckVariantsP(op.Variants, false, op.FontFamily)
+    }
   }
 
-  q := u.Query()
+  res, _ := SendAndEncode(client)
+  items := res.Items
+  generated, hasWarnings := gen.GenerateUrlMultiple(items, cfg.Options)
 
-  q.Set("family", family.String())
-  q.Set("display", "swap")
+  if !hasWarnings {
+    if cfg.ToCssImport {
+      CssImportSurround(&generated)
+    }
 
-  u.RawQuery = q.Encode()
+    fmt.Println(generated)
 
-  return UnescapeColonAndComma(u.String()), len(hasWarnings) > 0
+    if cfg.Copy {
+      CopyText(generated)
+    }
+  }
 }
 
-func UnescapeColonAndComma(str string) string {
-  return strings.ReplaceAll(
-    strings.ReplaceAll(str, "%3A", ":"), "%2C", ",",
-  )
+func CssImportSurround(generated *string) {
+  *generated = fmt.Sprintf(`@import url("%s");`, *generated)
 }
 
-func IsAll(vars []string) bool {
-  return len(lo.Filter(vars , func(item string, index int) bool {
-    return "all" == strings.ToLower(item)
-  })) > 0
+func CopyText(text string){
+  err := clipboard.WriteAll(text)
+  if err == nil {
+    color.HiGreen("Successfully copied!")
+  } else {
+    color.HiRed("Failed to copy")
+  }
 }

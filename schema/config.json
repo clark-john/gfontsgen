@@ -3,6 +3,7 @@
 	"title": "gfontsgen Generation Config",
 	"description": "Config used for font/url generation",
 	"type": "object",
+	"required": ["options"],
 	"properties": {
 		"options": {
 			"description": "Options",
@@ -14,38 +15,56 @@
 					"fontFamily": {
 						"type": "string"
 					},
-					"variant": {
-						"type": "string",
-						"enum": [
-							"200",
-							"200i",
-							"300",
-							"300i",
-							"regular",
-							"italic",
-							"500",
-							"500i",
-							"600",
-							"600i",
-							"700",
-							"700i",
-							"800",
-							"800i",
-							"900",
-							"900i"
-						]
+					"variants": {
+						"type": "array",
+						"minItems": 1,
+						"uniqueItems": true,
+						"if": true,
+						"items": {
+							"type": "string",
+								"enum": [
+								"200",
+								"200i",
+								"300",
+								"300i",
+								"regular",
+								"italic",
+								"500",
+								"500i",
+								"600",
+								"600i",
+								"700",
+								"700i",
+								"800",
+								"800i",
+								"900",
+								"900i"
+							]
+						}
 					}
 				},
-				"required": ["fontFamily", "variant"]
+				"required": ["fontFamily", "variants"]
 			}
 		},
 		"woff": {
 			"type": "boolean",
 			"default": false
 		},
+		"copy": {
+			"type": "boolean",
+			"default": false
+		},
+		"toCssImport": {
+			"type": "boolean",
+			"default": false
+		},
 		"deleteFontDir": {
 			"type": "boolean",
 			"default": false			
+		},
+		"outputPath": {
+			"type": "string",
+			"default": "fonts"
 		}
 	}
 }

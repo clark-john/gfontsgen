@@ -16,6 +16,8 @@ func GfontswebCommand() *cobra.Command {
 			err := browser.OpenURL(GOOGLE_FONTS_URL)
 			if err == nil {
 				color.HiGreen("Opened")
+			} else {
+				color.HiRed("Failed to open. Error: %s", err.Error())
 			}
 		},
 	}

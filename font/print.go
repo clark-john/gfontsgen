@@ -6,8 +6,13 @@ import (
 	"strings"
 )
 
-func PrintVariantsErrAndExit(variants []string, indices []int) {
-	fmt.Print("Following variants are invalid: ")
+func _PrintVariantsErr(
+	variants []string, 
+	indices []int, 
+	isExit bool,
+	printMessage string,
+){
+	fmt.Print(printMessage)
 
 	fmt.Print("[")
 
@@ -26,5 +31,18 @@ func PrintVariantsErrAndExit(variants []string, indices []int) {
 
 	fmt.Println("]")
 
-	os.Exit(1)
+	if isExit {
+		os.Exit(1)
+	}	
+}
+
+func PrintVariantsErrWithName(variants []string, indices []int, isExit bool, family string){
+	_PrintVariantsErr(
+		variants, indices, isExit, 
+		fmt.Sprintf("Following variants are invalid in font %s: ", family),
+	)
+}
+
+func PrintVariantsErr(variants []string, indices []int, isExit bool) {
+	_PrintVariantsErr(variants, indices, isExit, "Following variants are invalid: ")
 }

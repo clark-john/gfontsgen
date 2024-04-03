@@ -9,7 +9,7 @@ import (
 )
 
 const KEY_NAME string = key.KEY_NAME
-const Version string = "1.0.1"
+const Version string = "1.1.0"
 
 func main() {
 	_, isFound := os.LookupEnv(KEY_NAME)

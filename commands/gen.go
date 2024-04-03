@@ -9,30 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type GenerateUrlOptions struct {
-	Copy bool
-	Variants []string
-}
-
-type GenerateFontFileOptions struct {
-	Variants []string
-	Path string
-}
-
-func DefaultGenUrlOptions() *GenerateUrlOptions {
-	return &GenerateUrlOptions{
-		Copy: false,
-		Variants: []string{"regular"},
-	}
-}
-
-func DefaultGenFfOptions() *GenerateFontFileOptions {
-	return &GenerateFontFileOptions{
-		Variants: []string{"regular"},
-		Path: "fonts",
-	}
-}
-
 func GenCommand() *cobra.Command {
 	com := &cobra.Command{
 		Use: "gen",
@@ -63,9 +39,17 @@ func CheckVariants(isVariantsFlagPresent bool, varnts string, variants *[]string
 		indices := font.ValidateVariants(v)
 
 		if indices != nil {
-		  font.PrintVariantsErrAndExit(v, indices)
+		  font.PrintVariantsErr(v, indices, true)
 		}
 
 		*variants = v		
+	}
+}
+
+func CheckVariantsP(v []string, isExit bool, family string){
+	indices := font.ValidateVariants(v)
+
+	if indices != nil {
+	  font.PrintVariantsErrWithName(v, indices, isExit, family)
 	}
 }

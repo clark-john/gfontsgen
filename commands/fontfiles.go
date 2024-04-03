@@ -2,15 +2,16 @@ package commands
 
 import (
 	"fmt"
-	"strings"
+	"io/fs"
+	"os"
+	"path/filepath"
 
-	"github.com/clark-john/gfontsgen/font"
+	conf "github.com/clark-john/gfontsgen/config"
+	"github.com/clark-john/gfontsgen/gen"
 	"github.com/clark-john/gfontsgen/http"
-	"github.com/clark-john/gfontsgen/json"
 	"github.com/clark-john/gfontsgen/key"
 	"github.com/clark-john/gfontsgen/utils"
 	"github.com/fatih/color"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +21,7 @@ import (
 func FontFilesCommand() *cobra.Command {
 	var variants string
 	var outputPath string
-	// var config string
+	var config string
 	var isWoff bool
 
 	client := http.NewHttpClientWithKey(key.GetApiKey())
@@ -35,85 +36,106 @@ func FontFilesCommand() *cobra.Command {
 	fset.StringVarP(&outputPath, "path", "p", "fonts", "Output path to generate font files")
 	fset.StringVarP(&variants, "variants", "v", "", "Generate with specific variants (e.g. 400, 600, 200i, etc)")
 	fset.BoolVar(&isWoff, "woff", false, "Use WOFF2 format")
-	// ConfigFlag(fset, &config)
+	ConfigFlag(fset, &config)
 
 	com.Run = func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-      color.HiYellow("Provide a font family name")
-      utils.Exit(1)
-    }
+    isConfigFlag := conf.IsPresent(cmd)
 
-    fontName := utils.ToTitleCase(args[0])
+    IsOnlyConfigFlagOrExit(fset)
 
-    client.SetQuery("family", fontName)
-
-    if isWoff {
-    	client.SetQuery("capability", "woff2")
-    }
-
-    options := DefaultGenFfOptions()
-
-    CheckVariants(
-    	cmd.Flag("variants").Changed, variants, &options.Variants,
-    )
-
-    resp, isFound := SendAndEncode(client)
-
-    if cmd.Flag("path").Changed {
-    	options.Path = outputPath
-    }
-
-    if isFound {
-	    GenerateFontFiles(resp.Items[0], options)
-    } else {
-      fmt.Println(color.HiRedString("Font family not found"))
-    }
+		if !isConfigFlag {
+			if len(args) < 1 {
+	      color.HiYellow("Provide a font family name")
+	      utils.Exit(1)
+	    }
+	    FontfilesGenerateSingle(args[0], client, isWoff, cmd, variants, outputPath)
+		} else {
+			FontfilesGenerateMultiple(config, client)
+		}
 	}
 
 	return com
 }
 
-func GenerateFontFiles(_font json.FontItem, options *GenerateFontFileOptions) {
-	if IsAll(options.Variants) {
-		for _, variant := range lo.Keys(_font.Files) {
-			v := ReplaceIWithItalic(variant)
-			Download(_font.Files[v], options.Path, _font.Family, v)
+func FontfilesGenerateSingle(
+	family string,
+	client *http.HttpClient,
+	isWoff bool,
+	cmd *cobra.Command,
+	variants string,
+	outputPath string,
+){
+	fontName := utils.ToTitleCase(family)
+
+  client.SetQuery("family", fontName)
+
+  if isWoff {
+  	client.SetQuery("capability", "woff2")
+  }
+
+  options := gen.DefaultGenFfOptions()
+
+  CheckVariants(
+  	cmd.Flag("variants").Changed, variants, &options.Variants,
+  )
+
+  resp, isFound := SendAndEncode(client)
+
+  if cmd.Flag("path").Changed {
+  	options.Path = outputPath
+  }
+
+  if isFound {
+    gen.GenerateFontFiles(resp.Items[0], options)
+  } else {
+    fmt.Println(color.HiRedString("Font family not found"))
+  }
+}
+
+func FontfilesGenerateMultiple(config string, client *http.HttpClient) {
+	cfg := conf.ParseAndValidateConfig(config)
+	path := func() string {
+		p := cfg.OutputPath
+		if p == "" {
+			return "fonts"
 		}
-	} else {
-		for _, variant := range options.Variants {
-			v := ReplaceIWithItalic(variant)
-			if HasKey(_font.Files, v) {
-				Download(_font.Files[v], options.Path, _font.Family, v)
-			} else {
-				color.HiYellow("Warning: variant %s doesn't exist on font %s", v, _font.Family)
+		return p
+	}()
+  ops := cfg.Options
+
+  /* reused from url.go line 146 */
+  for index, op := range ops {
+    if index == len(ops) - 1 {
+      CheckVariantsP(op.Variants, true, op.FontFamily)
+    } else {
+      CheckVariantsP(op.Variants, false, op.FontFamily)
+    }
+  }
+
+  if cfg.DeleteFontDir {
+  	DeleteDirIfExist(path)
+  }
+
+  res, _ := SendAndEncode(client)
+  /* end of reused block of code */
+
+  gen.GenerateFontFilesMultiple(
+  	res.Items, 
+  	gen.NewGenFontFileMultiOptions(path, ops),
+  )
+}
+
+func DeleteDirIfExist(path string){
+	_, err := os.Open(path)
+
+	if err == nil {
+		if filepath.Walk(path, func(_path string, info fs.FileInfo, err error) error {
+			if !info.IsDir() {
+				os.RemoveAll(_path)
 			}
+			return err
+		}) != nil {
+			return
 		}
 	}
-}
-
-func Download(url string, path string, family string, variant string){
-	font.DownloadFile(font.DownloadOptions{
-		Url: url,
-		Path: path,
-		Family: family,
-		Variant: variant,
-	})
-}
-
-func ReplaceIWithItalic(str string) string {
-	bef, _, f := strings.Cut(str, "i")
-	if !f {
-		return bef
-	} else {
-		return bef + "italic"
-	}
-}
-
-func HasKey(m map[string]string, value string) bool {
-	for k := range m {
-		if k == value {
-			return true
-		}
-	}
-	return false
 }

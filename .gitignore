@@ -4,4 +4,6 @@ fonts
 *.txt
 *.exe
 !schema/config.json
-config.go
+*.bat
+scripts
+CHANGELOG.md

@@ -14,10 +14,7 @@ func StringToBytes(str string) []byte {
 }
 
 func Capitalize(word string) string {
-	l := strings.Split(word, "")
-	l[0] = strings.ToUpper(l[0])
-
-	return strings.Join(l, "")
+	return strings.ToUpper(string(word[0])) + word[1:]
 }
 
 func ToTitleCase(str string) string {

@@ -62,7 +62,7 @@ func CreateFileName(family string, vrnt string, ext string) string {
 		s.WriteString(utils.Capitalize(vrnt))
 	} else {
 		if isItalic {		
-			wght := vrnt[0:3]
+			wght := vrnt[:3]
 			style := vrnt[3:]
 			s.WriteString(wght + utils.Capitalize(style))
 		} else {
