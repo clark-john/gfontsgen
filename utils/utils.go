@@ -1,17 +1,9 @@
 package utils
 
 import (
-	"bytes"
 	"os"
 	"strings"
 )
-
-/**
- * convert string to bytes
-*/
-func StringToBytes(str string) []byte {
-	return bytes.NewBufferString(str).Bytes()
-}
 
 func Capitalize(word string) string {
 	return strings.ToUpper(string(word[0])) + word[1:]

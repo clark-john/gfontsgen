@@ -1,9 +1,6 @@
 package http
 
-import (
-	"bytes"
-	"io"
-)
+import "io"
 
 func ReadBody(r io.Reader) string {
 	b, err := io.ReadAll(r)
@@ -12,5 +9,5 @@ func ReadBody(r io.Reader) string {
 		return ""
 	}
 
-	return bytes.NewBuffer(b).String()
+	return string(b)
 }

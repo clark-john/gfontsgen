@@ -1,14 +1,11 @@
 package json
 
-import (
-	"encoding/json"
-	"github.com/clark-john/gfontsgen/utils"
-)
+import "encoding/json"
 
 func EncodeResponseStringJson(stringJson string) (*FullResponse, error) {
 	var resp FullResponse
 
-	err := json.Unmarshal(utils.StringToBytes(stringJson), &resp)
+	err := json.Unmarshal([]byte(stringJson), &resp)
 
 	if err != nil {
 		return nil, err

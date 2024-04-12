@@ -36,12 +36,12 @@ func FontFilesCommand() *cobra.Command {
 	fset.StringVarP(&outputPath, "path", "p", "fonts", "Output path to generate font files")
 	fset.StringVarP(&variants, "variants", "v", "", "Generate with specific variants (e.g. 400, 600, 200i, etc)")
 	fset.BoolVar(&isWoff, "woff", false, "Use WOFF2 format")
-	ConfigFlag(fset, &config)
+	conf.ConfigFlag(fset, &config)
 
 	com.Run = func(cmd *cobra.Command, args []string) {
     isConfigFlag := conf.IsPresent(cmd)
 
-    IsOnlyConfigFlagOrExit(fset)
+    conf.IsOnlyConfigFlagOrExit(fset)
 
 		if !isConfigFlag {
 			if len(args) < 1 {

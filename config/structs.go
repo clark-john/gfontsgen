@@ -1,9 +1,6 @@
 package config
 
-import (
-	"bytes"
-	"encoding/json"
-)
+import "encoding/json"
 
 type OptionItem struct {
 	FontFamily string
@@ -15,7 +12,7 @@ func (item OptionItem) String() string {
 	if err != nil {
 		return ""
 	}
-	return bytes.NewBuffer(b).String()
+	return string(b)
 }
 
 type ConfigInit struct {

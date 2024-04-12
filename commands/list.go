@@ -125,7 +125,7 @@ func ListCommand() *cobra.Command {
 		}
 
 		if writeTfFlag.Changed {
-			err := os.WriteFile(writeToFile, utils.StringToBytes(b.String()), 0666)
+			err := os.WriteFile(writeToFile, []byte(b.String()), 0666)
 			if err != nil {
 				fmt.Println("An error occurred")
 				os.Exit(1)

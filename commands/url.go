@@ -66,12 +66,12 @@ func UrlCommand() *cobra.Command {
   fl.StringVarP(&variants, "variants", "v", "", "Generate with specific variants (e.g. 400, 600, 200i, etc)")
   fl.BoolVar(&copyToClipboard, "copy", false, "Copy URL to clipboard")
   fl.BoolVarP(&cssImport, "css-import", "i", false, "Display as CSS import rule")
-  ConfigFlag(fl, &config)
+  conf.ConfigFlag(fl, &config)
 
   com.Run = func(cmd *cobra.Command, args []string) { 
     isConfigFlag := conf.IsPresent(cmd)
 
-    IsOnlyConfigFlagOrExit(fl)
+    conf.IsOnlyConfigFlagOrExit(fl)
 
     if !isConfigFlag {
       if len(args) < 1 {

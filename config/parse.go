@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -20,7 +19,7 @@ func (c ConfigInit) ToConfig() *Config {
 }
 
 func (c ConfigInit) GetDataString() string {
-	return bytes.NewBuffer(c.Data).String()
+	return string(c.Data)
 }
 
 func IsPresent(cmd *cobra.Command) bool {

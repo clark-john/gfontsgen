@@ -1,4 +1,4 @@
-package commands
+package config
 
 import (
 	"os"
@@ -6,19 +6,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/pflag"
 )
-
-type OptionItem struct {
-	FontFamily string
-	Variant string
-}
-
-type Config struct {
-	Options []OptionItem
-	Woff bool
-	DeleteFontDir bool
-	Copy bool
-	ToCssImport bool
-}
 
 func ConfigFlag(fset *pflag.FlagSet, variable *string){
 	fset.StringVar(variable, "config", "", "Url/font gen config file to use")

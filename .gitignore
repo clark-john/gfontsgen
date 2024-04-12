@@ -7,3 +7,4 @@ fonts
 *.bat
 scripts
 CHANGELOG.md
+*.ifp
