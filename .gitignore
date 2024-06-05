@@ -1,10 +1,7 @@
+dist
+node_modules
 fonts
-.env
 *.json
-*.txt
-*.exe
-!schema/config.json
-*.bat
-scripts
-CHANGELOG.md
-*.ifp
+!package.json
+!tsconfig.json
+src/commands/gen/configProvider.ts

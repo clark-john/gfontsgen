@@ -1,0 +1,48 @@
+{
+  "name": "gfontsgen",
+  "description": "Google Fonts URL and font files generator",
+  "version": "1.1.0-0",
+  "type": "module",
+  "author": {
+    "email": "mjohncl4rk@gmail.com",
+    "name": "John Clark"
+  },
+  "license": "MIT",
+  "bin": "./index.js",
+  "files": [
+    "dist",
+    "index.js"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build-js": "babel ./src -x .ts --out-dir dist",
+    "build": "yarn typecheck && yarn build-js",
+    "lint": "eslint ./src/**/*.ts",
+    "watch-js": "yarn build-js -w",
+    "watch-ts": "yarn typecheck -w",
+    "watch": "run-p watch-*"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.6",
+    "@babel/core": "^7.24.6",
+    "@babel/preset-typescript": "^7.24.6",
+    "@eslint/js": "^9.4.0",
+    "@types/node": "^20.12.12",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "eslint": "9.x",
+    "globals": "^15.3.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.11.0"
+  },
+  "dependencies": {
+    "clipboardy": "^4.0.0",
+    "commander": "^12.1.0",
+    "open": "^10.1.0",
+    "ora": "^8.0.1",
+    "picocolors": "^1.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
