@@ -1,17 +1,32 @@
 {
   "name": "gfontsgen",
   "description": "Google Fonts URL and font files generator",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
+  "license": "MIT",
+  "bin": "./index.js",
   "author": {
     "email": "mjohncl4rk@gmail.com",
     "name": "John Clark"
   },
-  "license": "MIT",
-  "bin": "./index.js",
+  "bugs": {
+    "url": "https://github.com/clark-john/gfontsgen/issues",
+    "email": "mjohncl4rk@gmail.com"
+  },
   "files": [
     "dist",
     "index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clark-john/gfontsgen"
+  },
+  "keywords": [
+    "google fonts",
+    "google fonts generator",
+    "fonts gen",
+    "css",
+    "fonts"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
