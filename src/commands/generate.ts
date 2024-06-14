@@ -39,6 +39,6 @@ export class GenCommand extends CommandBase {
       return this.help();
 
     if (!this.commands.map(x => x.name()).includes(this.args[0]))
-      this.error(`error: Unknown command '${this.args[0]}'`);
+      this.error(`error: Unknown command "${this.args[0]}"`);
   }
 }

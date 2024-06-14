@@ -1,10 +1,11 @@
 import clipboard from "clipboardy";
-import { Option } from "commander";
+import { Argument, Option } from "commander";
 import pc from "picocolors";
 import { CommandBase } from "../base.js";
 import { CommonGenOptions, configOption, variantsOption } from "../generate.js";
 import { API_URL, FONT_URL } from "@/urls.js";
 import { checkVariantsString, fetchWithKey, isErrorResponse, toTitleCase } from "@/utils.js";
+import { ConfigProvider } from "./configProvider.js";
 
 interface UrlCommandOptions extends CommonGenOptions {
   copy: boolean;
@@ -12,54 +13,90 @@ interface UrlCommandOptions extends CommonGenOptions {
 }
 
 export class UrlCommand extends CommandBase {
+  readonly url = new URL(API_URL);
+  readonly cfgProvider = new ConfigProvider();
+
   async handle(fontName: string, { copy, cssImport, variants, config }: UrlCommandOptions) {
-    const url = new URL(API_URL);
-    url.searchParams.set("family", toTitleCase(fontName));
-
-    if (variants)
-      checkVariantsString(variants);
-
-    const resp = await fetchWithKey(url);
-    const json = await resp.json();
-
-    if (isErrorResponse(json)) {
-      const err = (json as ErrorResponse).error;
-      if (err.code === 404) {
-        console.error("Font family not found");
-        return;
-      }
-    }
-
-    const font = (json as FullResponse).items[0];
-
     const fontUrl = new URL(FONT_URL);
 
-    let hasNonExistentVariant = false;
+    if (!config && !fontName)
+      this.error("error: Font family is required");
 
-    if (variants !== "all")
-      for (const v of variants.split(",")) {
-        if (!Object.hasOwn(font.files, v)) {
-          console.warn(
-            pc.bold(pc.yellow("Warning: variant %s doesn't exist on font %s.")),
-            v, font.family
-          );
-          if (!hasNonExistentVariant)
-            hasNonExistentVariant = true;
+    let _config: Config | null = null;
+    
+    if (config)
+      try {
+        _config = await this.cfgProvider.useFile(config);
+      } catch (e) {
+        this.error("error: " + (e as Error).message);
+      }
+
+    if (_config) {
+      copy = _config.copy || false;
+      cssImport = _config.toCssImport || false;
+    }
+
+    const families: string[] = [];
+
+    const optionItems: OptionItem[] = config && _config ? _config.options : [
+      { 
+        fontFamily: fontName,
+        get variants() {
+          return (variants ? variants.split(",") : ["regular"]) as Variant[];
+        }
+      }
+    ];
+
+    for (const { fontFamily, variants } of optionItems) {
+      const url = this.url;
+      url.searchParams.set("family", toTitleCase(fontFamily));
+      
+      const v = variants.join(",");
+
+      if (variants)
+        checkVariantsString(v);
+
+      const resp = await fetchWithKey(url);
+      const json = await resp.json();
+
+      if (isErrorResponse(json)) {
+        const err = (json as ErrorResponse).error;
+        if (err.code === 404) {
+          console.error("Font family not found");
+          return;
         }
       }
 
-    if (hasNonExistentVariant)
-      return;
+      const font = (json as FullResponse).items[0];
 
-    const family = font.family.replaceAll(" ", "+") + ":" + (() => {
-      if (variants === 'all')
-        return Object.keys(font.files).join(",");
+      let hasNonExistentVariant = false;
 
-      return (variants ? this.removeDups(variants) : "regular");
-    })();
+      if (v !== "all")
+        for (const v of variants) {
+          if (!Object.hasOwn(font.files, v.endsWith("i") ? v.replace("i", "italic") : v)) {
+            console.warn(
+              pc.bold(pc.yellow("Warning: variant %s doesn't exist on font %s.")),
+              v, font.family
+            );
+            if (!hasNonExistentVariant)
+              hasNonExistentVariant = true;
+          }
+        }
+
+      if (hasNonExistentVariant)
+        return;
+
+      families.push(font.family.replaceAll(" ", "+") + ":" + (() => {
+        if (!config)
+          if (v === 'all')
+            return Object.keys(font.files).join(",");
+
+        return (v ? this.removeDups(v) : "regular");
+      })());
+    }
 
     fontUrl.searchParams.set("display", "swap");
-    fontUrl.searchParams.set("family", family);
+    fontUrl.searchParams.set("family", families.join("|"));
 
     fontUrl.search = decodeURIComponent(fontUrl.search);
 
@@ -82,7 +119,7 @@ export class UrlCommand extends CommandBase {
 
   constructor() {
     const options = [
-      configOption,
+      configOption.conflicts(["copy", "cssImport", "variants"]),
       new Option("--copy", "Copy URL to clipboard"),
       new Option("-i, --css-import", "Display as CSS import rule"),
       variantsOption
@@ -94,7 +131,9 @@ export class UrlCommand extends CommandBase {
       this.addOption(opt);
 
     this
-      .argument("<font name>", "Font family to generate")
+      .addArgument(
+        new Argument("<font name>", "Font family to generate").argOptional()
+      )
       .description("Generate URL for CSS usage");
   }
 }

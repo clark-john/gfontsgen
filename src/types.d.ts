@@ -4,8 +4,35 @@ declare namespace NodeJS {
 	}
 }
 
+type Variant = 
+	"200" | "200i" |
+	"300" | "300i" |
+	"500" | "500i" |
+	"600" | "600i" |
+	"700" | "700i" |
+	"800" | "800i" |
+	"900" | "900i" |
+	"regular" | "italic"
+;
+
+interface OptionItem {
+	fontFamily: string;
+	variants: Variant[];
+}
+
+interface Config {
+	copy?: boolean;
+	woff?: boolean;
+	toCssImport?: boolean;
+	deleteFontDir?: boolean;
+	outputPath?: string;
+	options: OptionItem[]
+}
+
 type Classification = "display" | "handwriting" | "mono" | "monospace";
 type DecorativeStroke = "sans-serif" | "serif" | "slab-serif";
+
+type ErrorMap = Record<number, string[]>;
 
 interface FontItem {
 	family: string;
@@ -14,7 +41,7 @@ interface FontItem {
 	version: string;
 	lastModified: string;
 	files: Record<string, string>;
-	category: Classification & DecorativeStroke;
+	category: Classification | DecorativeStroke;
 	kind: string;
 	menu: string;
 }

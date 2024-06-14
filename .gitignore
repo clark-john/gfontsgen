@@ -4,4 +4,4 @@ fonts
 *.json
 !package.json
 !tsconfig.json
-src/commands/gen/configProvider.ts
+*.log

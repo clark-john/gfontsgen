@@ -1,11 +1,22 @@
+import { access } from "fs/promises";
 import { EOL } from "os";
 import pc from "picocolors";
+import { fetch2 } from "./http.js";
 
 export function toTitleCase(text: string): string {
 	return text
 		.split(" ")
 		.map(capitalize)
 		.join(" ");
+}
+
+export async function exists(path: string): Promise<boolean> {
+	try {
+		await access(path);
+		return true;
+	} catch (e) {
+		return false;
+	}
 }
 
 export function capitalize(text: string): string {
@@ -16,11 +27,11 @@ export function capitalize(text: string): string {
 
 export function fetchWithKey(url: URL, requestInit?: RequestInit) {
 	url.searchParams.set("key", process.env.GFONTSGEN_API_KEY!);
-	return fetch(url, requestInit);
+	return fetch2(url, requestInit);
 }
 
 export function isErrorResponse(json: any): boolean {
-	return Object.hasOwn(json as Record<string, any>, "error");
+	return Object.hasOwn(json as object, "error");
 }
 
 const variantsGroupRegex = /^[\w,]*$/;

@@ -1,20 +1,18 @@
-import { Option } from "commander";
-import { createWriteStream } from "fs";
-import { access, constants, mkdir, open } from "fs/promises";
-import path from "path";
+import { Argument, Option } from "commander";
+import { rm } from "fs/promises";
 import pc from "picocolors";
-import { Readable } from "stream";
-import { pipeline } from "stream/promises";
 import { CommandBase } from "../base.js";
 import { CommonGenOptions, configOption, variantsOption } from "../generate.js";
+import { download } from "@/http.js";
 import { API_URL } from "@/urls.js";
 import { 
-  capitalize, 
   checkVariantsString, 
+  exists, 
   fetchWithKey,
   isErrorResponse, 
   toTitleCase 
 } from "@/utils.js";
+import { ConfigProvider } from "./configProvider.js";
 
 interface FontFilesCommandOptions extends CommonGenOptions {
   path: string;
@@ -22,8 +20,46 @@ interface FontFilesCommandOptions extends CommonGenOptions {
 }
 
 export class FontFilesCommand extends CommandBase {
-  async handle(fontName: string, { path, variants, woff }: FontFilesCommandOptions) {
-    const url = new URL(API_URL);
+  readonly url = new URL(API_URL);
+  readonly cfgProvider = new ConfigProvider();
+
+  async handle(fontName: string, { path, variants, woff, config }: FontFilesCommandOptions) {
+    const cfg = this.cfgProvider;
+    
+    if (!config && !fontName)
+      this.error("error: Font family is required");
+
+    if (!config)
+      return this.processFont(fontName, { path, variants, woff });
+
+    if (config) {
+      let _config: Config;
+      try {
+        _config = await cfg.useFile(config);
+      } catch (e) {
+        this.error("error: " + (e as Error).message);
+      }
+
+      if (_config) {
+        if (_config.outputPath)
+          path = _config.outputPath;
+
+        if (_config.deleteFontDir)
+          if (await exists(path))
+            await rm(path, { recursive: true, force: true });
+      }
+
+      for (const { fontFamily, variants: v } of _config.options)
+        this.processFont(fontFamily, { path, variants: v.join(","), woff });
+    }
+  }
+
+  async processFont(
+    fontName: string, 
+    { path, variants, woff }: Omit<FontFilesCommandOptions, "config">,
+  ) {
+    
+    const url = this.url;
     url.searchParams.set("family", toTitleCase(fontName));
     
     if (woff)
@@ -49,7 +85,7 @@ export class FontFilesCommand extends CommandBase {
 
     if (variants === 'all') {
       for (const [variant, link] of Object.entries(font.files))
-        await this.download(fontName, variant, path, link);
+        await download(fontName, variant, path, link);
       return;
     }
 
@@ -61,49 +97,13 @@ export class FontFilesCommand extends CommandBase {
         continue;
       };
 
-      await this.download(fontName, v, path, font.files[v]);
+      await download(fontName, v, path, font.files[v]);
     }
-  }
-
-  async download(fontName: string, variant: string, _path: string, link: string) {
-    const f = capitalize(fontName.replaceAll(" ", ""));
-
-    const startsWithNumber = /^\d+/.test(variant);
-    const isItalic = variant.endsWith("italic");
-    
-    const v = !startsWithNumber
-      ? capitalize(variant)
-      : variant.substring(0, 3) + (isItalic ? "Italic" : "Regular");
-
-    const resp = await fetch(link);
-
-    if (!resp.ok) {
-      console.error(pc.bold(pc.red("Failed to download")));
-      return;
-    }
-
-    const filename = path.resolve(_path, f + "-" + v + path.extname(link));
-
-    try {
-      await access(_path);
-    } catch (e) {
-      mkdir(_path);
-    }
-
-    const file = await open(filename, constants.O_CREAT);
-
-    const fileStream = createWriteStream(
-      filename, 
-      { autoClose: true, encoding: "binary" }
-    );
-
-    await pipeline(Readable.fromWeb(resp.body!), fileStream);
-    file.close();
   }
   
   constructor() {
     const options = [
-      configOption,
+      configOption.conflicts(["woff", "path", "variants"]),
       new Option("-p, --path <folder>", "Output path to generate fonts").default("fonts"),
       variantsOption,
       new Option("--woff", "use WOFF2 format")
@@ -115,7 +115,7 @@ export class FontFilesCommand extends CommandBase {
       this.addOption(opt);
 
     this
-      .argument("<font name>", "Font family to generate")
+      .addArgument(new Argument("<font name>", "Font family to generate").argOptional())
       .description("Generate font files");
   }
 }

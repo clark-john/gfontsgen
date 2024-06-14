@@ -3,7 +3,7 @@ import { CommandBase } from "./commands/index.js";
 import { 
 	GfontswebCommand, 
 	ListCommand, 
-	GenCommand 
+	GenCommand
 } from "./commands/index.js";
 
 const KEY_NAME = "GFONTSGEN_API_KEY";
@@ -33,5 +33,4 @@ for (const comm of commands)
 	);
 
 cmd.parseAsync()
-	.then()
 	.catch(err => console.error(err));
