@@ -5,3 +5,4 @@ fonts
 !package.json
 !tsconfig.json
 *.log
+relnotes

@@ -1,5 +1,5 @@
 import { Argument, Option } from "commander";
-import { rm } from "fs/promises";
+import { mkdir, rm } from "fs/promises";
 import pc from "picocolors";
 import { CommandBase } from "../base.js";
 import { CommonGenOptions, configOption, variantsOption } from "../generate.js";
@@ -44,10 +44,13 @@ export class FontFilesCommand extends CommandBase {
         if (_config.outputPath)
           path = _config.outputPath;
 
-        if (_config.deleteFontDir)
+        if (_config.deleteFontDirBeforeDownload)
           if (await exists(path))
             await rm(path, { recursive: true, force: true });
       }
+
+      if (!(await exists(path)))
+        await mkdir(path);
 
       for (const { fontFamily, variants: v } of _config.options)
         this.processFont(fontFamily, { path, variants: v.join(","), woff });

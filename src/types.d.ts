@@ -24,7 +24,7 @@ interface Config {
 	copy?: boolean;
 	woff?: boolean;
 	toCssImport?: boolean;
-	deleteFontDir?: boolean;
+	deleteFontDirBeforeDownload?: boolean;
 	outputPath?: string;
 	options: OptionItem[]
 }

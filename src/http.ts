@@ -2,9 +2,9 @@ import { createWriteStream, promises as fsPromises } from "fs";
 import path from "path";
 import pc from "picocolors";
 import { Readable, promises } from "stream";
-import { capitalize, exists, toTitleCase } from "./utils.js";
+import { capitalize, toTitleCase } from "./utils.js";
 
-const { constants: { O_CREAT }, mkdir, open, writeFile } = fsPromises;
+const { constants: { O_CREAT }, open, writeFile } = fsPromises;
 
 export async function fetch2(url: string | URL | Request, requestInit?: RequestInit): Promise<Response> {
   try {
@@ -13,7 +13,7 @@ export async function fetch2(url: string | URL | Request, requestInit?: RequestI
     const err = e as TypeError;
     await writeFile("error.log", err.cause + "\n" + err.stack!);
 
-    console.error("An error occurred while processing the request!");
+    console.error(pc.bold(pc.red("An error occurred while processing the request!")));
     process.exit(-1);
   }
 }
@@ -38,9 +38,6 @@ export async function download(
   }
 
   const filename = path.resolve(_path, f + "-" + v + path.extname(link));
-
-  if (!(await exists(_path)))
-    await mkdir(_path);
 
   const file = await open(filename, O_CREAT);
 

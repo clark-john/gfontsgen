@@ -4,7 +4,7 @@
 
 ### Simple Usage:
 
-List generation
+Fonts list generation
 
 ```bash
 # limit list to 10 font items
@@ -16,10 +16,10 @@ gfontsgen list -d sans-serif
 # generate list of display fonts
 gfontsgen list -c display
 # write list to a file
-gfontsgen list --write-to-file # default: fonts.json
+gfontsgen list --write-to-file fonts.txt
 ```
 
-Url generation
+URL generation
 
 ```bash
 # generate css url
